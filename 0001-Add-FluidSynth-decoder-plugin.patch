@@ -30,7 +30,7 @@ index 15469f5..e59f7eb 100644
            libid3tag (http://www.underbit.com/products/mad/)
    - FLAC - libFLAC version 1.1 (http://flac.sourceforge.net/)
    - MIDI - libtimidity version 0.1 (http://timidity.sourceforge.net/)
-+  - MIDI - FluidSynth version 2.3.2 (https://www.fluidsynth.org/)
++  - MIDI - FluidSynth version 2.0.0 (https://www.fluidsynth.org/)
    - modplug - libmodplug version 0.7 (http://modplug-xmms.sourceforge.net/)
    - MP3 - libmad with libid3tag (ftp://ftp.mars.org/pub/mpeg/)
    - Musepack (mpc) - libmpc (http://www.musepack.net/), and
@@ -435,7 +435,7 @@ index 0000000..707d2b7
 +
 +if test "x$with_fluidsynth" != "xno"
 +then
-+	PKG_CHECK_MODULES(fluidsynth, fluidsynth >= 2.3.2,
++	PKG_CHECK_MODULES(fluidsynth, fluidsynth >= 2.0.0,
 +			   [AC_SUBST(fluidsynth_LIBS)
 +			   AC_SUBST(fluidsynth_CFLAGS)
 +			   want_fluidsynth="yes"
