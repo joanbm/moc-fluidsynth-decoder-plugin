@@ -10,7 +10,9 @@ On the other hand, FluidSynth is available on all major Linux distributions and 
 
 ## Dependencies
 
-FluidSynth >= 2.0.0, plus all dependencies required to build MOC (see below).
+* All dependencies required to build MOC (see below)
+* FluidSynth >= 2.0.0
+* libsmf >= 1.3 (optional: support for duration and seeking)
 
 ## Installation instructions
 
@@ -67,11 +69,9 @@ Other than this, you should be able to just browse to a folder containing MIDI f
 
 NOTE: If you have built MOC with both the `libTiMidity` and `FluidSynth` decoder plugins (which I don't recommend), you should be able to pick which one to use with the `PreferredDecoders` configuration option.
 
-## Known bugs and limitations
-
-* Due to FluidSynth limitations, the length/duration shown for MIDI files will likely be incorrect, and seeking will also not work properly.
-  See https://github.com/FluidSynth/fluidsynth/issues/1151 for more detail.
-
 ## TODO List
 
+* Implement support for duration and seeking with just FluidSynth, without requiring libsmf
+  This is currently not possible due to various limitations and quirks of FluidSynth.
+  See: https://github.com/libsdl-org/SDL_mixer/issues/519, https://github.com/FluidSynth/fluidsynth/issues/1151, https://github.com/FluidSynth/fluidsynth/issues/648.
 * Submit this plugin upstream

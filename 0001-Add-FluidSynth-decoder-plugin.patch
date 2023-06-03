@@ -1,6 +1,6 @@
-From 229bb5bcc2b213e261c3dd69ece71e7932156513 Mon Sep 17 00:00:00 2001
+From 2b58d64a8dc6673fe26080cc3f820d9b6332d6b2 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Joan=20Bruguera=20Mic=C3=B3?= <joanbrugueram@gmail.com>
-Date: Fri, 2 Jun 2023 23:34:12 +0000
+Date: Sat, 3 Jun 2023 21:42:07 +0000
 Subject: [PATCH] Add FluidSynth decoder plugin
 
 ---
@@ -11,19 +11,19 @@ Subject: [PATCH] Add FluidSynth decoder plugin
  decoder_plugins/Makefile.am              |   4 +
  decoder_plugins/decoders.m4              |   1 +
  decoder_plugins/fluidsynth/.clang-format |   7 +
- decoder_plugins/fluidsynth/Makefile.am   |   6 +
- decoder_plugins/fluidsynth/fluidsynth.c  | 288 +++++++++++++++++++++++
- decoder_plugins/fluidsynth/fluidsynth.m4 |  17 ++
+ decoder_plugins/fluidsynth/Makefile.am   |  10 +
+ decoder_plugins/fluidsynth/fluidsynth.c  | 315 +++++++++++++++++++++++
+ decoder_plugins/fluidsynth/fluidsynth.m4 |  34 +++
  options.c                                |   4 +
  tools/md5check.sh                        |   2 +-
- 12 files changed, 336 insertions(+), 3 deletions(-)
+ 12 files changed, 384 insertions(+), 3 deletions(-)
  create mode 100644 decoder_plugins/fluidsynth/.clang-format
  create mode 100644 decoder_plugins/fluidsynth/Makefile.am
  create mode 100644 decoder_plugins/fluidsynth/fluidsynth.c
  create mode 100644 decoder_plugins/fluidsynth/fluidsynth.m4
 
 diff --git a/README b/README
-index 15469f5..e59f7eb 100644
+index 15469f5..1f19668 100644
 --- a/README
 +++ b/README
 @@ -79,6 +79,7 @@ provide the libraries needed to support them:
@@ -118,22 +118,26 @@ index 0000000..a8536d9
 +AllowShortFunctionsOnASingleLine: None
 diff --git a/decoder_plugins/fluidsynth/Makefile.am b/decoder_plugins/fluidsynth/Makefile.am
 new file mode 100644
-index 0000000..d8ca1ee
+index 0000000..718809e
 --- /dev/null
 +++ b/decoder_plugins/fluidsynth/Makefile.am
-@@ -0,0 +1,6 @@
+@@ -0,0 +1,10 @@
 +lib_LTLIBRARIES = libfluidsynth_decoder.la
 +libdir = $(plugindir)/$(DECODER_PLUGIN_DIR)
 +libfluidsynth_decoder_la_LDFLAGS = @PLUGIN_LDFLAGS@
 +libfluidsynth_decoder_la_LIBADD = $(fluidsynth_LIBS)
 +libfluidsynth_decoder_la_CFLAGS = $(fluidsynth_CFLAGS) -I$(top_srcdir)
++if HAVE_smf
++    libfluidsynth_decoder_la_LIBADD += $(smf_LIBS)
++    libfluidsynth_decoder_la_CFLAGS += $(smf_CFLAGS)
++endif
 +libfluidsynth_decoder_la_SOURCES = fluidsynth.c
 diff --git a/decoder_plugins/fluidsynth/fluidsynth.c b/decoder_plugins/fluidsynth/fluidsynth.c
 new file mode 100644
-index 0000000..86fefcc
+index 0000000..9251103
 --- /dev/null
 +++ b/decoder_plugins/fluidsynth/fluidsynth.c
-@@ -0,0 +1,288 @@
+@@ -0,0 +1,315 @@
 +/*
 + * MOC - music on console
 + * Copyright (C) 2004 Damian Pietras <daper@daper.net>
@@ -155,6 +159,9 @@ index 0000000..86fefcc
 +#include <string.h>
 +#include <assert.h>
 +#include <fluidsynth.h>
++#ifdef HAVE_SMF
++#include <smf.h>
++#endif
 +
 +#define DEBUG
 +
@@ -169,7 +176,9 @@ index 0000000..86fefcc
 +{
 +	fluid_synth_t *synth;
 +	fluid_player_t *player;
-+	int length;
++#ifdef HAVE_SMF
++	smf_t *smf;
++#endif
 +	struct decoder_error error;
 +};
 +
@@ -189,19 +198,24 @@ index 0000000..86fefcc
 +		delete_fluid_synth(data->synth);
 +		data->synth = NULL;
 +	}
++#ifdef HAVE_SMF
++	if (data->smf)
++	{
++		smf_delete(data->smf);
++		data->smf = NULL;
++	}
++#endif
 +}
 +
 +static struct fluidsynth_data *make_fluidsynth_data(const char *file)
 +{
-+	struct fluidsynth_data *data;
-+	char dummy[4];
-+
-+	data =
++	struct fluidsynth_data *data =
 +	    (struct fluidsynth_data *)xmalloc(sizeof(struct fluidsynth_data));
-+
 +	data->synth = NULL;
 +	data->player = NULL;
-+	data->length = 0;
++#ifdef HAVE_SMF
++	data->smf = NULL;
++#endif
 +	decoder_error_init(&data->error);
 +
 +	data->synth = new_fluid_synth(settings);
@@ -247,16 +261,16 @@ index 0000000..86fefcc
 +		return data;
 +	}
 +
-+	// Workaround for https://github.com/FluidSynth/fluidsynth/issues/648
-+	// Read a single sample from the MIDI to trigger initialization, or
-+	// the following call to fluid_player_get_total_ticks will return 0
-+	fluid_synth_write_s16(data->synth, 1, dummy, 0, 2, dummy, 1, 2);
-+	// FIXME: This seek seems to eat an entire note on some MIDIs, e.g. on
-+	// Ancient Aliens_midis.zip -> "Garden of lost souls.mid" from
-+	// https://www.doomworld.com/forum/topic/93428-releasing-some-midi-files-ancient-aliens-resurgence-plus-mega-stewboy-pak/
-+	// fluid_player_seek(data->player, 0);
-+
-+	data->length = fluid_player_get_total_ticks(data->player);
++#ifdef HAVE_SMF
++	data->smf = smf_load(file);
++	if (data->smf == NULL)
++	{
++		decoder_error(&data->error, ERROR_FATAL, 0,
++			      "Can't load midifile with libsmf: %s", file);
++		free_fluidsynth_data(data);
++		return data;
++	}
++#endif
 +
 +	return data;
 +}
@@ -278,33 +292,46 @@ index 0000000..86fefcc
 +static void fluidsynth_info(const char *file_name, struct file_tags *info,
 +			    const int tags_sel)
 +{
-+	struct fluidsynth_data *data = make_fluidsynth_data(file_name);
-+
-+	if (tags_sel & TAGS_TIME && data->length > 0)
++#ifdef HAVE_SMF
++	smf_t *smf = smf_load(file_name);
++	if (smf == NULL)
 +	{
-+		info->time = data->length / 1000;
++		return;
++	}
++
++	if (tags_sel & TAGS_TIME)
++	{
++		info->time = (int)smf_get_length_seconds(smf);
 +		info->filled |= TAGS_TIME;
 +	}
 +
-+	fluidsynth_close(data);
++	smf_delete(smf);
++#endif
 +}
 +
 +static int fluidsynth_seek(void *void_data, int sec)
 +{
++#ifdef HAVE_SMF
 +	struct fluidsynth_data *data = (struct fluidsynth_data *)void_data;
 +
 +	assert(sec >= 0);
 +
-+	int ms = sec * 1000;
-+
-+	ms = MIN(ms, data->length);
-+
-+	if (fluid_player_seek(data->player, ms) == FLUID_FAILED)
++	float sec_clamp = MIN(sec, smf_get_length_seconds(data->smf));
++	if (smf_seek_to_seconds(data->smf, sec_clamp) != 0)
 +	{
 +		return -1;
 +	}
 +
-+	return ms / 1000;
++	smf_event_t *event = smf_peek_next_event(data->smf);
++	if (fluid_player_seek(data->player, event->time_pulses) == FLUID_FAILED)
++	{
++		return -1;
++	}
++
++	return (int)event->time_seconds;
++#else
++	return -1;
++#endif
 +}
 +
 +static int fluidsynth_decode(void *void_data, char *buf, int buf_len,
@@ -338,8 +365,12 @@ index 0000000..86fefcc
 +
 +static int fluidsynth_get_duration(void *void_data)
 +{
++#ifdef HAVE_SMF
 +	struct fluidsynth_data *data = (struct fluidsynth_data *)void_data;
-+	return data->length > 0 ? data->length / 1000 : -1;
++	return (int)smf_get_length_seconds(data->smf);
++#else
++	return -1;
++#endif
 +}
 +
 +static void fluidsynth_get_name(const char *file ATTR_UNUSED, char buf[4])
@@ -424,10 +455,10 @@ index 0000000..86fefcc
 +}
 diff --git a/decoder_plugins/fluidsynth/fluidsynth.m4 b/decoder_plugins/fluidsynth/fluidsynth.m4
 new file mode 100644
-index 0000000..707d2b7
+index 0000000..800bc5e
 --- /dev/null
 +++ b/decoder_plugins/fluidsynth/fluidsynth.m4
-@@ -0,0 +1,17 @@
+@@ -0,0 +1,34 @@
 +dnl fluidsynth
 +
 +AC_ARG_WITH(fluidsynth, AS_HELP_STRING([--without-fluidsynth],
@@ -445,6 +476,23 @@ index 0000000..707d2b7
 +
 +AM_CONDITIONAL([BUILD_fluidsynth], [test "$want_fluidsynth"])
 +AC_CONFIG_FILES([decoder_plugins/fluidsynth/Makefile])
++
++dnl libsmf (optional: support for duration and seeking)
++
++AC_ARG_WITH(smf, AS_HELP_STRING([--without-smf],
++                                 [Compile without smf]))
++
++if test "x$with_smf" != "xno"
++then
++	PKG_CHECK_MODULES(smf, smf >= 1.3,
++			   [AC_SUBST(smf_LIBS)
++			   AC_SUBST(smf_CFLAGS)
++			   have_smf="yes"
++			   AC_DEFINE([HAVE_SMF], [1], [Define if you have smf.])],
++			   [true])
++fi
++
++AM_CONDITIONAL([HAVE_smf], [test "$have_smf"])
 diff --git a/options.c b/options.c
 index c348b2b..44c2808 100644
 --- a/options.c
