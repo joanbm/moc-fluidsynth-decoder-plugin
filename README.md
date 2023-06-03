@@ -71,7 +71,7 @@ NOTE: If you have built MOC with both the `libTiMidity` and `FluidSynth` decoder
 
 ## TODO List
 
-* Implement support for duration and seeking with just FluidSynth, without requiring libsmf
+* Implement support for duration and seeking with just FluidSynth, without requiring libsmf.
   This is currently not possible due to various limitations and quirks of FluidSynth.
   See: https://github.com/libsdl-org/SDL_mixer/issues/519, https://github.com/FluidSynth/fluidsynth/issues/1151, https://github.com/FluidSynth/fluidsynth/issues/648.
 * Submit this plugin upstream
