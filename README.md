@@ -19,21 +19,21 @@ Unfortunately, MOC plugins are not designed to be compiled separately from the m
 For instructions on how to build MOC, refer to the [official README](https://moc.daper.net/node/87).
 It is also worth taking a look into how your distribution builds MOC (e.g. the [PKGBUILD](https://gitlab.archlinux.org/archlinux/packaging/packages/moc/-/blob/main/PKGBUILD) for Arch Linux) in order to see which packages need to be installed, which plugins are included by default, any additional workarounds/patched that need to be used, etc.
 
-Once you know how to build MOC, you need to do the following two steps after downloading the source code and before running `./configure`:
+Once you know how to build MOC, you need to do the following steps after downloading the source code and before running `./configure`:
 
-* Add the plugin by applying the patch over the MOC code base (tested with MOC 2.5.2, but any future version should work):
+1. Add the plugin by applying the patch over the MOC code base (tested with MOC 2.5.2, but any future version should work):
 
   ```sh
   foo@bar ~/moc-2.5.2$ patch -Np1 -i ~/moc-fluidsynth-decoder-plugin/0001-Add-FluidSynth-decoder-plugin.patch
   ```
 
-* Regenerate the Autotools build files:
+2. Regenerate the Autotools build files:
 
   ```sh
   foo@bar ~/moc-2.5.2$ autoreconf -fiv
   ```
 
-* When running `./configure`, include the `--with-fluidsynth` option:
+3. When running `./configure`, include the `--with-fluidsynth` option:
 
   ```sh
   foo@bar ~/moc-2.5.2$ ./configure --with-fluidsynth `# ...add your specific options here`
