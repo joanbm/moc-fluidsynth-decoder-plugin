@@ -51,7 +51,7 @@ If you run into trouble forwarding the audio inside the container, take a look a
 Unfortunately, MOC plugins are not designed to be compiled separately from the main code, so you will have to rebuild MOC to include this plugin.
 
 For instructions on how to build MOC, refer to the [official README](https://moc.daper.net/node/87).
-It is also worth taking a look into how your distribution builds MOC (e.g. the [PKGBUILD](https://gitlab.archlinux.org/archlinux/packaging/packages/moc/-/blob/main/PKGBUILD) for Arch Linux) in order to see which packages need to be installed, which plugins are included by default, any additional workarounds/patched that need to be used, etc.
+It is also worth taking a look into how your distribution builds MOC (e.g. the [PKGBUILD](https://gitlab.archlinux.org/archlinux/packaging/packages/moc/-/blob/main/PKGBUILD) for Arch Linux) in order to see which packages need to be installed, which plugins are included by default, any additional workarounds/patches that need to be used, etc.
 
 Once you know how to build MOC, you need to do the following steps after downloading the source code and before running `./configure`:
 
@@ -73,7 +73,7 @@ Once you know how to build MOC, you need to do the following steps after downloa
   foo@bar ~/moc-2.5.2$ ./configure --with-fluidsynth `# ...add your specific options here`
   ```
 
-This example shows how the entire build process should look like:
+This example shows what the entire build process should look like:
 
 ```sh
 foo@bar ~$ wget http://ftp.daper.net/pub/soft/moc/stable/moc-2.5.2.tar.bz2
@@ -82,7 +82,7 @@ foo@bar ~$ cd moc-2.5.2/
 foo@bar ~/moc-2.5.2$ patch -Np1 -i ~/moc-fluidsynth-decoder-plugin/0001-Add-FluidSynth-decoder-plugin.patch
 foo@bar ~/moc-2.5.2$ autoreconf -fiv
 foo@bar ~/moc-2.5.2$ ./configure --with-fluidsynth --prefix=$HOME/my-moc-install --disable-cache --without-ffmpeg
-foo@bar ~/moc-2.5.2$ make -j(nproc)
+foo@bar ~/moc-2.5.2$ make -j"$(nproc)"
 foo@bar ~/moc-2.5.2$ make install
 foo@bar ~/moc-2.5.2$ ~/my-moc-install/bin/mocp
 ```
