@@ -36,7 +36,7 @@ podman run --rm -it \
     moc-fluidsynth-decoder-plugin
 ```
 
-If you run into trouble forwarding the audio inside the container, take a look at [this article](https://github.com/mviereck/x11docker/wiki/Container-sound:-ALSA-or-Pulseaudio) and [this article](https://joonas.fi/2020/12/audio-in-docker-containers-linux-audio-subsystems-spotifyd/).
+If you run into trouble forwarding the audio inside the container, take a look at [this article](https://github.com/mviereck/x11docker/wiki/Container-sound:-ALSA-or-Pulseaudio) and [this article](https://joonas.fi/2020/12/audio-in-docker-containers-linux-audio-subsystems-spotifyd/). If you are using SELinux (e.g. on Fedora), also take a look at [this article](https://github.com/mviereck/x11docker/wiki/SELinux).
 
 ### Manual build
 
