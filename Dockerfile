@@ -40,5 +40,6 @@ ENV LANG="C.UTF-8"
 RUN useradd -m user
 USER user
 WORKDIR /app/music
+# This MIDI is made by user 'Dogman15' at English Wikipedia, licensed "CC BY 3.0" (https://creativecommons.org/licenses/by/3.0/).
 ADD --chmod=666 https://upload.wikimedia.org/wikipedia/commons/5/55/MIDI_sample.mid .
 CMD ["mocp"]
