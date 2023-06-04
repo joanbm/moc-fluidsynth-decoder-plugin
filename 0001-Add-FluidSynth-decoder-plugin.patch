@@ -1,4 +1,4 @@
-From 2b58d64a8dc6673fe26080cc3f820d9b6332d6b2 Mon Sep 17 00:00:00 2001
+From 3774dd2b43104772baba52afc97e15b539461995 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Joan=20Bruguera=20Mic=C3=B3?= <joanbrugueram@gmail.com>
 Date: Sat, 3 Jun 2023 21:42:07 +0000
 Subject: [PATCH] Add FluidSynth decoder plugin
@@ -12,11 +12,11 @@ Subject: [PATCH] Add FluidSynth decoder plugin
  decoder_plugins/decoders.m4              |   1 +
  decoder_plugins/fluidsynth/.clang-format |   7 +
  decoder_plugins/fluidsynth/Makefile.am   |  10 +
- decoder_plugins/fluidsynth/fluidsynth.c  | 315 +++++++++++++++++++++++
+ decoder_plugins/fluidsynth/fluidsynth.c  | 324 +++++++++++++++++++++++
  decoder_plugins/fluidsynth/fluidsynth.m4 |  34 +++
- options.c                                |   4 +
+ options.c                                |   3 +
  tools/md5check.sh                        |   2 +-
- 12 files changed, 384 insertions(+), 3 deletions(-)
+ 12 files changed, 392 insertions(+), 3 deletions(-)
  create mode 100644 decoder_plugins/fluidsynth/.clang-format
  create mode 100644 decoder_plugins/fluidsynth/Makefile.am
  create mode 100644 decoder_plugins/fluidsynth/fluidsynth.c
@@ -134,10 +134,10 @@ index 0000000..718809e
 +libfluidsynth_decoder_la_SOURCES = fluidsynth.c
 diff --git a/decoder_plugins/fluidsynth/fluidsynth.c b/decoder_plugins/fluidsynth/fluidsynth.c
 new file mode 100644
-index 0000000..9251103
+index 0000000..674ba64
 --- /dev/null
 +++ b/decoder_plugins/fluidsynth/fluidsynth.c
-@@ -0,0 +1,315 @@
+@@ -0,0 +1,324 @@
 +/*
 + * MOC - music on console
 + * Copyright (C) 2004 Damian Pietras <daper@daper.net>
@@ -226,7 +226,6 @@ index 0000000..9251103
 +		free_fluidsynth_data(data);
 +		return data;
 +	}
-+
 +	if (soundfont != NULL &&
 +	    fluid_synth_sfload(data->synth, soundfont, 1) == FLUID_FAILED)
 +	{
@@ -398,13 +397,12 @@ index 0000000..9251103
 +
 +static void fluidsynth_init()
 +{
-+	static const char *EMPTY_AUDIO_DRIVERS[] = {NULL};
-+
 +	soundfont = options_get_str("FluidSynth_SoundFont");
 +	rate = options_get_int("FluidSynth_Rate");
 +
 +	// Since we just decode into a buffer, we don't need audio drivers.
 +	// And also avoid https://github.com/FluidSynth/fluidsynth/issues/218
++	static const char *EMPTY_AUDIO_DRIVERS[] = {NULL};
 +	if (fluid_audio_driver_register(EMPTY_AUDIO_DRIVERS) == FLUID_FAILED)
 +	{
 +		fatal("FluidSynth: Failed to register empty audio drivers");
@@ -420,6 +418,17 @@ index 0000000..9251103
 +	    FLUID_FAILED)
 +	{
 +		fatal("FluidSynth: Failed to set the sample date");
++	}
++
++	if (soundfont == NULL)
++	{
++		char *default_soundfont;
++		if (fluid_settings_getstr_default(settings,
++					      "synth.default-soundfont",
++					      &default_soundfont) == FLUID_OK)
++		{
++			soundfont = default_soundfont;
++		}
 +	}
 +}
 +
@@ -494,15 +503,14 @@ index 0000000..800bc5e
 +
 +AM_CONDITIONAL([HAVE_smf], [test "$have_smf"])
 diff --git a/options.c b/options.c
-index c348b2b..44c2808 100644
+index c348b2b..acb32b8 100644
 --- a/options.c
 +++ b/options.c
-@@ -725,6 +725,10 @@ void options_init ()
+@@ -725,6 +725,9 @@ void options_init ()
  	add_int  ("TiMidity_Volume", 100, CHECK_RANGE(1), 0, 800);
  	add_str  ("TiMidity_Config", NULL, CHECK_NONE);
  
-+	add_str  ("FluidSynth_SoundFont", "/usr/share/soundfonts/default.sf2",
-+	                                  CHECK_NONE);
++	add_str  ("FluidSynth_SoundFont", NULL, CHECK_NONE);
 +	add_int  ("FluidSynth_Rate", 44100, CHECK_RANGE(1), 8000, 96000);
 +
  	add_int  ("SidPlay2_DefaultSongLength", 180,

@@ -57,7 +57,8 @@ foo@bar ~/moc-2.5.2$ ~/my-moc-install/bin/mocp
 
 ## Usage instructions
 
-By default, the plugin will try to use the SoundFont you have in `/usr/share/soundfonts/default.sf2`.
+By default, the plugin will try to use the system's default SoundFont.
+For example, `/usr/share/sounds/sf2/default-GM.sf2:ro` on Debian, or `/usr/share/soundfonts/default.sf2` in Arch Linux.
 
 To use a different SoundFont, set the `FluidSynth_SoundFont` configuration option to the path of your SoundFont in `.moc/config`, e.g.:
 
