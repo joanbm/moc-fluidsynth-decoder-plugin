@@ -1,5 +1,7 @@
 # MOC (Music on Console) FluidSynth decoder plugin
 
+[![Build and push Docker image](https://github.com/joanbm/moc-fluidsynth-decoder-plugin/actions/workflows/docker_build_push.yml/badge.svg)](https://github.com/joanbm/moc-fluidsynth-decoder-plugin/actions/workflows/docker_build_push.yml)
+
 A plugin to add support for playing [MIDI](https://en.wikipedia.org/wiki/MIDI) files using [FluidSynth](https://www.fluidsynth.org/) to the [MOC (Music on Console)](https://moc.daper.net/) player.
 
 ## Why?
