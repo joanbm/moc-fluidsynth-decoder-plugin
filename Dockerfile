@@ -30,8 +30,8 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Overwrite the official Debian MOC package with our version
-COPY --from=builder /app/moc_*.deb /moc.deb
-RUN dpkg -i /moc.deb
+COPY --from=builder /app/moc_*.deb /app/moc-ffmpeg-plugin_*.deb /pkgs/
+RUN dpkg -i /pkgs/*
 
 # Fixes showing files with non-ASCII names
 ENV LANG="C.UTF-8"
