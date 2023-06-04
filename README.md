@@ -8,13 +8,45 @@ MOC already supports playing MIDI files using the [libTiMidity](https://sourcefo
 
 On the other hand, FluidSynth is available on all major Linux distributions and supports SoundFont (.sf2) files.
 
-## Dependencies
+## Installation instructions
+
+### With Docker or Podman
+
+A `Dockerfile` containing MOC and the decoder plugin is provided to ease both testing and simple usage.
+
+On a typical Linux system with Docker and PulseAudio installed, the following should start an instance of MOC and you should be able to play a sample MIDI file:
+
+```sh
+docker build . -t moc-fluidsynth
+docker run --rm -it \
+    -v "$XDG_RUNTIME_DIR"/pulse/native:/pulse-native \
+    -e PULSE_SERVER=unix:/pulse-native \
+    moc-fluidsynth
+```
+
+You can mount your SoundFont and music inside the container as follows:
+
+```sh
+docker build . -t moc-fluidsynth
+podman run --rm -it \
+    -v "$XDG_RUNTIME_DIR"/pulse/native:/pulse-native \
+    -e PULSE_SERVER=unix:/pulse-native \
+    -v "/path/to/my/music/folder":/app/music:ro \
+    -v "/path/to/my/soundfont.sf2":/usr/share/sounds/sf2/default-GM.sf2:ro \
+    moc-fluidsynth
+```
+
+If you run into trouble forwarding the audio inside the container, take a look at [this article](https://github.com/mviereck/x11docker/wiki/Container-sound:-ALSA-or-Pulseaudio) and [this article](https://joonas.fi/2020/12/audio-in-docker-containers-linux-audio-subsystems-spotifyd/).
+
+### Manual build
+
+#### Dependencies
 
 * All dependencies required to build MOC (see below)
 * FluidSynth >= 2.0.0
 * libsmf >= 1.3 (optional: support for duration and seeking)
 
-## Installation instructions
+#### Build instructions
 
 Unfortunately, MOC plugins are not designed to be compiled separately from the main code, so you will have to rebuild MOC to include this plugin.
 
