@@ -16,7 +16,7 @@ moc-2.5.2: moc-2.5.2.tar.bz2
 	patch -d moc-2.5.2 -Np1 -i ../0001-Add-FluidSynth-decoder-plugin.patch
 
 libfluidsynth_decoder.so: moc-2.5.2
-	$(CC) -DSTANDALONE -Imoc-2.5.2 -shared $(shell pkg-config --cflags --libs fluidsynth) $(SMF_FLAGS) \
+	$(CC) -fPIC -DSTANDALONE -Imoc-2.5.2 -shared $(shell pkg-config --cflags --libs fluidsynth) $(SMF_FLAGS) \
 		moc-2.5.2/decoder_plugins/fluidsynth/fluidsynth.c -o libfluidsynth_decoder.so
 
 install: libfluidsynth_decoder.so
