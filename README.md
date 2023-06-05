@@ -79,6 +79,7 @@ This example shows what the entire build process should look like:
 
 ```sh
 foo@bar ~$ wget http://ftp.daper.net/pub/soft/moc/stable/moc-2.5.2.tar.bz2
+foo@bar ~$ echo "f3a68115602a4788b7cfa9bbe9397a9d5e24c68cb61a57695d1c2c3ecf49db08  moc-2.5.2.tar.bz2" | sha256sum -c
 foo@bar ~$ tar xf moc-2.5.2.tar.bz2
 foo@bar ~$ cd moc-2.5.2/
 foo@bar ~/moc-2.5.2$ patch -Np1 -i ~/moc-fluidsynth-decoder-plugin/0001-Add-FluidSynth-decoder-plugin.patch
