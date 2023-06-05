@@ -1,4 +1,4 @@
-From 3774dd2b43104772baba52afc97e15b539461995 Mon Sep 17 00:00:00 2001
+From 95bee39b15abfc44837046b56b91e221911b8cc3 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Joan=20Bruguera=20Mic=C3=B3?= <joanbrugueram@gmail.com>
 Date: Sat, 3 Jun 2023 21:42:07 +0000
 Subject: [PATCH] Add FluidSynth decoder plugin
@@ -12,11 +12,11 @@ Subject: [PATCH] Add FluidSynth decoder plugin
  decoder_plugins/decoders.m4              |   1 +
  decoder_plugins/fluidsynth/.clang-format |   7 +
  decoder_plugins/fluidsynth/Makefile.am   |  10 +
- decoder_plugins/fluidsynth/fluidsynth.c  | 324 +++++++++++++++++++++++
+ decoder_plugins/fluidsynth/fluidsynth.c  | 331 +++++++++++++++++++++++
  decoder_plugins/fluidsynth/fluidsynth.m4 |  34 +++
  options.c                                |   3 +
  tools/md5check.sh                        |   2 +-
- 12 files changed, 392 insertions(+), 3 deletions(-)
+ 12 files changed, 399 insertions(+), 3 deletions(-)
  create mode 100644 decoder_plugins/fluidsynth/.clang-format
  create mode 100644 decoder_plugins/fluidsynth/Makefile.am
  create mode 100644 decoder_plugins/fluidsynth/fluidsynth.c
@@ -134,10 +134,10 @@ index 0000000..718809e
 +libfluidsynth_decoder_la_SOURCES = fluidsynth.c
 diff --git a/decoder_plugins/fluidsynth/fluidsynth.c b/decoder_plugins/fluidsynth/fluidsynth.c
 new file mode 100644
-index 0000000..674ba64
+index 0000000..08c1a28
 --- /dev/null
 +++ b/decoder_plugins/fluidsynth/fluidsynth.c
-@@ -0,0 +1,324 @@
+@@ -0,0 +1,331 @@
 +/*
 + * MOC - music on console
 + * Copyright (C) 2004 Damian Pietras <daper@daper.net>
@@ -154,6 +154,8 @@ index 0000000..674ba64
 +
 +#ifdef HAVE_CONFIG_H
 +#include "config.h"
++#elif defined(STANDALONE)
++#define HAVE_STDBOOL_H 1
 +#endif
 +
 +#include <string.h>
@@ -397,8 +399,13 @@ index 0000000..674ba64
 +
 +static void fluidsynth_init()
 +{
++#ifdef STANDALONE
++	soundfont = getenv("MOC_FLUIDSYNTH_SOUNDFONT");
++	rate = 44100;
++#else
 +	soundfont = options_get_str("FluidSynth_SoundFont");
 +	rate = options_get_int("FluidSynth_Rate");
++#endif
 +
 +	// Since we just decode into a buffer, we don't need audio drivers.
 +	// And also avoid https://github.com/FluidSynth/fluidsynth/issues/218
