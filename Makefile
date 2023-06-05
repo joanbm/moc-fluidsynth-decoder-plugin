@@ -3,7 +3,7 @@ SMF_FLAGS = $(shell pkg-config --exists smf && pkg-config --cflags --libs smf &&
 # Try to detect MOC's decoder_plugins directory path... not the nicest code
 PLUGINS_DIR := $(shell strings "$$(which mocp)" /usr/bin/mocp | grep -x /.*/decoder_plugins | head -1)
 
-.PHONY: all clean install
+.PHONY: all clean install uninstall
 
 all: libfluidsynth_decoder.so
 
@@ -21,6 +21,9 @@ libfluidsynth_decoder.so: moc-2.5.2
 
 install: libfluidsynth_decoder.so
 	install -m 755 libfluidsynth_decoder.so $(PLUGINS_DIR)/libfluidsynth_decoder.so
+
+uninstall:
+	rm -f $(PLUGINS_DIR)/libfluidsynth_decoder.so
 
 clean:
 	rm -rf moc-2.5.2
