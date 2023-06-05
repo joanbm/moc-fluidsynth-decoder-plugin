@@ -6,14 +6,14 @@ WORKDIR /app
 RUN sed -i '/^deb / {p; s/deb /deb-src /}' /etc/apt/sources.list \
  && apt-get update \
  && apt-get build-dep --no-install-recommends -y moc \
- && apt-get install --no-install-recommends -y devscripts quilt libsmf-dev libfluidsynth-dev \
+ && apt-get install --no-install-recommends -y devscripts quilt libfluidsynth-dev libsmf-dev \
  && apt-get source moc \
  && rm -rf /var/lib/apt/lists/*
 COPY 0001-Add-FluidSynth-decoder-plugin.patch .
 
 # Apply the patch over the Debian package and build it
 RUN cd ./*/ \
- && sed -i "s/^Build-Depends: /&libsmf-dev, libfluidsynth-dev, /g" debian/control \
+ && sed -i "s/^Build-Depends: /&libfluidsynth-dev, libsmf-dev, /g" debian/control \
  && echo "usr/lib/*/moc/decoder_plugins/libfluidsynth_decoder.so" >>debian/moc.install \
  && cp ../0001-Add-FluidSynth-decoder-plugin.patch debian/patches \
  && echo "0001-Add-FluidSynth-decoder-plugin.patch" >>debian/patches/series \
