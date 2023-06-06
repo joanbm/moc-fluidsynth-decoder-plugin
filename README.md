@@ -33,7 +33,7 @@ make
 sudo make install
 ```
 
-And the library should have been compiled and installed.
+And the plugin should have been compiled and installed.
 
 Unfortunately, this approach has a (relatively minor) con, which stems from the fact that MOC does not have great support for plugins built separately from the MOC source code.
 In particular, you will not be able to set the SoundFont in the MOC configuration file, but rather you will need to use an environment variable.
