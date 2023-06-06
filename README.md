@@ -1,6 +1,6 @@
-# MOC (Music on Console) FluidSynth decoder plugin
+# MOC (Music on Console) FluidSynth plugin
 
-[![Build and push Docker image](https://github.com/joanbm/moc-fluidsynth-decoder-plugin/actions/workflows/docker_build_push.yml/badge.svg)](https://github.com/joanbm/moc-fluidsynth-decoder-plugin/actions/workflows/docker_build_push.yml)
+[![Build and push Docker image](https://github.com/joanbm/moc-fluidsynth-plugin/actions/workflows/docker_build_push.yml/badge.svg)](https://github.com/joanbm/moc-fluidsynth-plugin/actions/workflows/docker_build_push.yml)
 
 A plugin to add support for playing [MIDI](https://en.wikipedia.org/wiki/MIDI) files using [FluidSynth](https://www.fluidsynth.org/) to the [MOC (Music on Console)](https://moc.daper.net/) player.
 
@@ -50,7 +50,7 @@ Once you know how to build MOC, you need to do the following steps after downloa
 1. Add the plugin by applying the patch over the MOC code base (tested with MOC 2.5.2, but any future version should work):
 
   ```sh
-  foo@bar ~/moc-2.5.2$ patch -Np1 -i ~/moc-fluidsynth-decoder-plugin/0001-Add-FluidSynth-decoder-plugin.patch
+  foo@bar ~/moc-2.5.2$ patch -Np1 -i ~/moc-fluidsynth-plugin/0001-Add-FluidSynth-decoder-plugin.patch
   ```
 
 2. Regenerate the Autotools build files:
@@ -72,7 +72,7 @@ foo@bar ~$ wget http://ftp.daper.net/pub/soft/moc/stable/moc-2.5.2.tar.bz2
 foo@bar ~$ echo "f3a68115602a4788b7cfa9bbe9397a9d5e24c68cb61a57695d1c2c3ecf49db08  moc-2.5.2.tar.bz2" | sha256sum -c
 foo@bar ~$ tar xf moc-2.5.2.tar.bz2
 foo@bar ~$ cd moc-2.5.2/
-foo@bar ~/moc-2.5.2$ patch -Np1 -i ~/moc-fluidsynth-decoder-plugin/0001-Add-FluidSynth-decoder-plugin.patch
+foo@bar ~/moc-2.5.2$ patch -Np1 -i ~/moc-fluidsynth-plugin/0001-Add-FluidSynth-decoder-plugin.patch
 foo@bar ~/moc-2.5.2$ autoreconf -fiv
 foo@bar ~/moc-2.5.2$ ./configure --with-fluidsynth --prefix=$HOME/my-moc-install --disable-cache --without-ffmpeg
 foo@bar ~/moc-2.5.2$ make -j"$(nproc)"
@@ -105,32 +105,32 @@ To use a different SoundFont:
 
 Other than this, you should be able to just browse to a folder containing MIDI files and play them.
 
-NOTE: If you have built MOC with both the `libTiMidity` and `FluidSynth` decoder plugins (which I don't recommend), you should be able to pick which one to use with the `PreferredDecoders` configuration option.
+NOTE: If you have built MOC with both the `libTiMidity` and `FluidSynth` plugins (which I don't recommend), you should be able to pick which one to use with the `PreferredDecoders` configuration option.
 
 ## With Docker or Podman
 
-A `Dockerfile` containing MOC and the decoder plugin is provided to ease both testing and also simple usage.
+A `Dockerfile` containing MOC and the plugin is provided to ease both testing and also simple usage.
 
 On a typical Linux system with Docker and PulseAudio installed, the following should start an instance of MOC and you should be able to play a sample MIDI file:
 
 ```sh
-docker build . -t moc-fluidsynth-decoder-plugin
+docker build . -t moc-fluidsynth-plugin
 docker run --rm -it \
     -v "$XDG_RUNTIME_DIR"/pulse/native:/pulse-native \
     -e PULSE_SERVER=unix:/pulse-native \
-    moc-fluidsynth-decoder-plugin
+    moc-fluidsynth-plugin
 ```
 
 You can mount your SoundFont and music inside the container as follows:
 
 ```sh
-docker build . -t moc-fluidsynth-decoder-plugin
+docker build . -t moc-fluidsynth-plugin
 podman run --rm -it \
     -v "$XDG_RUNTIME_DIR"/pulse/native:/pulse-native \
     -e PULSE_SERVER=unix:/pulse-native \
     -v "/path/to/my/music/folder":/app/music:ro \
     -v "/path/to/my/soundfont.sf2":/usr/share/sounds/sf2/default-GM.sf2:ro \
-    moc-fluidsynth-decoder-plugin
+    moc-fluidsynth-plugin
 ```
 
 If you run into trouble forwarding the audio inside the container, take a look at [this article](https://github.com/mviereck/x11docker/wiki/Container-sound:-ALSA-or-Pulseaudio) and [this article](https://joonas.fi/2020/12/audio-in-docker-containers-linux-audio-subsystems-spotifyd/).
