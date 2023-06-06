@@ -18,7 +18,7 @@ In contrast, FluidSynth is available on all major Linux distributions and suppor
 To compile the plugin, you will need the development versions of those libraries along with basic C build tools (`binutils`, `gcc`, etc.), `pkg-config` and `wget`.
 
 For Debian/Ubuntu, the packages you need are called `build-essential`, `pkgconf`, `wget`, `libfluidsynth-dev` and `libsmf-dev`.
-For Arch Linux, the packages you need are: `base-devel`, `wget`, `fluidsynth` and `smf`.
+For Arch Linux, the packages you need are: `base-devel`, `wget`, `fluidsynth` and `libsmf`.
 
 ## Build and installation instructions
 
