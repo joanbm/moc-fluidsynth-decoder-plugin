@@ -11,11 +11,11 @@ moc-2.5.2.tar.bz2:
 	wget http://ftp.daper.net/pub/soft/moc/stable/moc-2.5.2.tar.bz2
 	echo "f3a68115602a4788b7cfa9bbe9397a9d5e24c68cb61a57695d1c2c3ecf49db08  moc-2.5.2.tar.bz2" | sha256sum -c
 
-moc-2.5.2: moc-2.5.2.tar.bz2
+moc-2.5.2/decoder_plugins/fluidsynth/fluidsynth.c: moc-2.5.2.tar.bz2 0001-Add-FluidSynth-decoder-plugin.patch
 	tar xf moc-2.5.2.tar.bz2
 	patch -d moc-2.5.2 -Np1 -i ../0001-Add-FluidSynth-decoder-plugin.patch
 
-libfluidsynth_decoder.so: moc-2.5.2
+libfluidsynth_decoder.so: moc-2.5.2/decoder_plugins/fluidsynth/fluidsynth.c
 	$(CC) -fPIC -DSTANDALONE -Imoc-2.5.2 -shared $(shell pkg-config --cflags --libs fluidsynth) $(SMF_FLAGS) \
 		moc-2.5.2/decoder_plugins/fluidsynth/fluidsynth.c -o libfluidsynth_decoder.so
 
