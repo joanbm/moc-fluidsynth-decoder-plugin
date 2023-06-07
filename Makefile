@@ -8,7 +8,7 @@ PLUGINS_DIR := $(shell strings "$$(which mocp)" /usr/bin/mocp | grep -x /.*/deco
 all: libfluidsynth_decoder.so
 
 libfluidsynth_decoder.so: moc/decoder_plugins/fluidsynth/fluidsynth.c
-	$(CC) -fPIC -DSTANDALONE -Imoc -shared moc/decoder_plugins/fluidsynth/fluidsynth.c \
+	$(CC) -Wall -Wextra -fPIC -DSTANDALONE -Imoc -shared moc/decoder_plugins/fluidsynth/fluidsynth.c \
 		$(shell pkg-config --cflags --libs fluidsynth) $(SMF_FLAGS) -o libfluidsynth_decoder.so
 
 install: libfluidsynth_decoder.so

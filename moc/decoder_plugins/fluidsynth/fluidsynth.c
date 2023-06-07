@@ -16,6 +16,7 @@
 #include "config.h"
 #elif defined(STANDALONE)
 #define HAVE_STDBOOL_H 1
+#define HAVE_VAR_ATTRIBUTE_UNUSED 1
 #endif
 
 #include <string.h>
