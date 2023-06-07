@@ -24,6 +24,7 @@ m4_include(decoder_plugins/sidplay2/sidplay2.m4)
 m4_include(decoder_plugins/sndfile/sndfile.m4)
 m4_include(decoder_plugins/speex/speex.m4)
 m4_include(decoder_plugins/timidity/timidity.m4)
+m4_include(decoder_plugins/fluidsynth/fluidsynth.m4)
 m4_include(decoder_plugins/vorbis/vorbis.m4)
 m4_include(decoder_plugins/wavpack/wavpack.m4)
 

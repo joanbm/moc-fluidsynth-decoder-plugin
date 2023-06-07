@@ -14,6 +14,9 @@ Daniel T. Borelli:
 	* Assisted with testing.
 	* Provided basis for fixing foreground mode unreaped children.
 
+Joan Bruguera:
+	* Added FluidSynth decoder for MIDI.
+
 Morten Grunnet Buhl:
 	* Provided Yellow/Red theme.
 

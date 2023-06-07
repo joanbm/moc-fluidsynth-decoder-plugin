@@ -15,10 +15,10 @@ In contrast, FluidSynth is available on all major Linux distributions and suppor
 * FluidSynth >= 2.0.0
 * libsmf >= 1.3 (optional: support for duration and seeking)
 
-To compile the plugin, you will need the development versions of those libraries along with basic C build tools (`binutils`, `gcc`, etc.), `pkg-config` and `wget`.
+To compile the plugin, you will need the development versions of those libraries along with basic C build tools (`binutils`, `gcc`, etc.) and `pkg-config`.
 
-For Debian/Ubuntu, the packages you need are called `build-essential`, `pkgconf`, `wget`, `libfluidsynth-dev` and `libsmf-dev`.
-For Arch Linux, the packages you need are: `base-devel`, `wget`, `fluidsynth` and `libsmf`.
+For Debian/Ubuntu, the packages you need are called `build-essential`, `pkgconf`, `libfluidsynth-dev` and `libsmf-dev`.
+For Arch Linux, the packages you need are: `base-devel`, `fluidsynth` and `libsmf`.
 
 ## Build and installation instructions
 
@@ -38,46 +38,37 @@ And the plugin should have been compiled and installed.
 Unfortunately, this approach has a (relatively minor) con, which stems from the fact that MOC does not have great support for plugins built separately from the MOC source code.
 In particular, you will not be able to set the SoundFont in the MOC configuration file, but rather you will need to use an environment variable.
 
-### As part of MOC
+### As a full build of MOC
 
-If you are building MOC yourself, you can include this plugin as part of the MOC source code tree, so that it gets compiled alongside the rest of the source code.
+The [moc](moc) folder includes a full copy of the MOC source code tree (revision 3005) with the decoder plugin included in it.
 
-For instructions on how to build MOC, refer to the [official README](https://moc.daper.net/node/87).
-Additionally, consider examining how your distribution builds MOC (e.g. the [PKGBUILD](https://gitlab.archlinux.org/archlinux/packaging/packages/moc/-/blob/main/PKGBUILD) for Arch Linux) in order to see which packages need to be installed, which plugins are included by default, any additional workarounds/patches that need to be used, etc.
+After you navigate into the `moc` folder, the build process mirrors that of the official source code, so you can refer to the [official README](https://moc.daper.net/node/87).
 
-Once you know how to build MOC, you need to do the following steps after downloading the source code and before running `./configure`:
+NOTE: Make sure to run `autoreconf -if` before running `./configure`, as the source code inside the `moc` folder is directly imported from SVN.
 
-1. Add the plugin by applying the patch over the MOC code base (tested with MOC 2.5.2, but any future version should work):
-
-  ```sh
-  foo@bar ~/moc-2.5.2$ patch -Np1 -i ~/moc-fluidsynth-plugin/0001-Add-FluidSynth-decoder-plugin.patch
-  ```
-
-2. Regenerate the Autotools build files:
-
-  ```sh
-  foo@bar ~/moc-2.5.2$ autoreconf -fiv
-  ```
-
-3. When running `./configure`, include the `--with-fluidsynth` option:
-
-  ```sh
-  foo@bar ~/moc-2.5.2$ ./configure --with-fluidsynth `# ...add your specific options here`
-  ```
+If you run into problems, consider examining how your distribution builds MOC (e.g. the [PKGBUILD](https://gitlab.archlinux.org/archlinux/packaging/packages/moc/-/blob/main/PKGBUILD) for Arch Linux) in order to see which packages need to be installed, which plugins are included by default, any additional workarounds/patches that need to be used, etc.
 
 This example shows what the entire build process should look like:
 
 ```sh
+foo@bar ~/moc-fluidsynth-plugin$ cd moc/
+foo@bar ~/moc-fluidsynth-plugin/moc-2.5.2$ autoreconf -if
+foo@bar ~/moc-fluidsynth-plugin/moc-2.5.2$ ./configure --with-fluidsynth --prefix=$HOME/my-moc-install --disable-cache --without-ffmpeg
+foo@bar ~/moc-fluidsynth-plugin/moc-2.5.2$ make -j"$(nproc)"
+foo@bar ~/moc-fluidsynth-plugin/moc-2.5.2$ make install
+foo@bar ~/moc-fluidsynth-plugin/moc-2.5.2$ ~/my-moc-install/bin/mocp
+```
+
+If you want to backport the plugin to a different version of MOC, you can generate a patch file by running `make 0001-Add-FluidSynth-decoder-plugin.patch` (requires `git` and `subersion`).
+Once you have the patch, you should be able to apply it over the source code of that version (modulo any conflicts that may happen). For example:
+
+```sh
+foo@bar ~$ make 0001-Add-FluidSynth-decoder-plugin.patch -C moc-fluidsynth-plugin
 foo@bar ~$ wget http://ftp.daper.net/pub/soft/moc/stable/moc-2.5.2.tar.bz2
 foo@bar ~$ echo "f3a68115602a4788b7cfa9bbe9397a9d5e24c68cb61a57695d1c2c3ecf49db08  moc-2.5.2.tar.bz2" | sha256sum -c
 foo@bar ~$ tar xf moc-2.5.2.tar.bz2
 foo@bar ~$ cd moc-2.5.2/
-foo@bar ~/moc-2.5.2$ patch -Np1 -i ~/moc-fluidsynth-plugin/0001-Add-FluidSynth-decoder-plugin.patch
-foo@bar ~/moc-2.5.2$ autoreconf -fiv
-foo@bar ~/moc-2.5.2$ ./configure --with-fluidsynth --prefix=$HOME/my-moc-install --disable-cache --without-ffmpeg
-foo@bar ~/moc-2.5.2$ make -j"$(nproc)"
-foo@bar ~/moc-2.5.2$ make install
-foo@bar ~/moc-2.5.2$ ~/my-moc-install/bin/mocp
+foo@bar ~/moc-2.5.2$ patch -Np1 -i ../moc-fluidsynth-plugin/0001-Add-FluidSynth-decoder-plugin.patch
 ```
 
 ## Usage instructions

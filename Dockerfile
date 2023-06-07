@@ -1,3 +1,12 @@
+FROM alpine:3.18 AS patch_builder
+WORKDIR /app
+
+# Squash all the changes into a single patch
+RUN apk add --no-cache git subversion make
+COPY Makefile ./
+COPY moc ./moc
+RUN make 0001-Add-FluidSynth-decoder-plugin.patch
+
 FROM debian:bullseye-slim AS builder
 
 WORKDIR /app
@@ -9,7 +18,7 @@ RUN sed -i '/^deb / {p; s/deb /deb-src /}' /etc/apt/sources.list \
  && apt-get install --no-install-recommends -y devscripts quilt libfluidsynth-dev libsmf-dev \
  && apt-get source moc \
  && rm -rf /var/lib/apt/lists/*
-COPY 0001-Add-FluidSynth-decoder-plugin.patch .
+COPY --from=patch_builder /app/0001-Add-FluidSynth-decoder-plugin.patch .
 
 # Apply the patch over the Debian package and build it
 RUN cd ./*/ \

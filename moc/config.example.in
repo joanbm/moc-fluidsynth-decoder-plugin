@@ -640,6 +640,10 @@
 # Otherwise set it to the name of a specific file.
 #TiMidity_Config =
 
+# Self-describing FluidSynth audio characteristic options.
+#FluidSynth_SoundFont = /usr/share/soundfonts/default.sf2
+#FluidSynth_Rate = 44100            # Between 8000 and 96000
+
 # Self-describing SidPlay2 audio characteristic options.
 #SidPlay2_DefaultSongLength = 180   # If not in database (in seconds)
 #SidPlay2_MinimumSongLength = 0     # Play at least n (in seconds)

@@ -7,16 +7,8 @@ PLUGINS_DIR := $(shell strings "$$(which mocp)" /usr/bin/mocp | grep -x /.*/deco
 
 all: libfluidsynth_decoder.so
 
-moc-2.5.2.tar.bz2:
-	wget http://ftp.daper.net/pub/soft/moc/stable/moc-2.5.2.tar.bz2
-	echo "f3a68115602a4788b7cfa9bbe9397a9d5e24c68cb61a57695d1c2c3ecf49db08  moc-2.5.2.tar.bz2" | sha256sum -c
-
-moc-2.5.2/decoder_plugins/fluidsynth/fluidsynth.c: moc-2.5.2.tar.bz2 0001-Add-FluidSynth-decoder-plugin.patch
-	tar xf moc-2.5.2.tar.bz2
-	patch -d moc-2.5.2 -Np1 -i ../0001-Add-FluidSynth-decoder-plugin.patch
-
-libfluidsynth_decoder.so: moc-2.5.2/decoder_plugins/fluidsynth/fluidsynth.c
-	$(CC) -fPIC -DSTANDALONE -Imoc-2.5.2 -shared moc-2.5.2/decoder_plugins/fluidsynth/fluidsynth.c \
+libfluidsynth_decoder.so: moc/decoder_plugins/fluidsynth/fluidsynth.c
+	$(CC) -fPIC -DSTANDALONE -Imoc -shared moc/decoder_plugins/fluidsynth/fluidsynth.c \
 		$(shell pkg-config --cflags --libs fluidsynth) $(SMF_FLAGS) -o libfluidsynth_decoder.so
 
 install: libfluidsynth_decoder.so
@@ -25,7 +17,13 @@ install: libfluidsynth_decoder.so
 uninstall:
 	rm -f $(PLUGINS_DIR)/libfluidsynth_decoder.so
 
+0001-Add-FluidSynth-decoder-plugin.patch:
+	rm -rf moc-original
+	svn checkout -r 3005 svn://svn.daper.net/moc/trunk moc-original
+	rm -rf moc-original/.svn
+	git diff --no-index moc-original moc | \
+		sed -e 's|a/moc-original/|a/|g' -e 's|b/moc/|b/|g' \
+		> 0001-Add-FluidSynth-decoder-plugin.patch
+
 clean:
-	rm -rf moc-2.5.2
-	rm -f moc-2.5.2.tar.bz2
-	rm -f libfluidsynth_decoder.so
+	rm -rf moc-original libfluidsynth_decoder.so 0001-Add-FluidSynth-decoder-plugin.patch

@@ -36,6 +36,10 @@ if BUILD_timidity
     SUBDIRS += timidity
 endif
 
+if BUILD_fluidsynth
+    SUBDIRS += fluidsynth
+endif
+
 if BUILD_sidplay2
     SUBDIRS += sidplay2
 endif

@@ -240,7 +240,7 @@ do
       $DEC
       SUM2=$(expr "$SUM2" : '\([^ ]*\)')
       ;;
-  modplug|musepack|sidplay2|timidity|tremor|wavpack)
+  modplug|musepack|sidplay2|timidity|fluidsynth|tremor|wavpack)
       $IGNORE && continue
       [[ "${UNSUPPORTED[$DEC]}" ]] || {
         echo -e "*** Decoder not yet supported: $DEC\n" > /dev/stderr

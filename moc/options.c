@@ -729,6 +729,9 @@ void options_init ()
 	add_int  ("TiMidity_Volume", 100, CHECK_RANGE(1), 0, 800);
 	add_str  ("TiMidity_Config", NULL, CHECK_NONE);
 
+	add_str  ("FluidSynth_SoundFont", NULL, CHECK_NONE);
+	add_int  ("FluidSynth_Rate", 44100, CHECK_RANGE(1), 8000, 96000);
+
 	add_int  ("SidPlay2_DefaultSongLength", 180,
 	                 CHECK_RANGE(1), 0, INT_MAX);
 	add_int  ("SidPlay2_MinimumSongLength", 0,
