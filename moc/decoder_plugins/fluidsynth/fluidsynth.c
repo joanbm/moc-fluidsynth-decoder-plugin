@@ -47,7 +47,35 @@ struct fluidsynth_data
 
 static const char *soundfont = NULL;
 static int rate = 44100;
-static fluid_settings_t *settings;
+static fluid_settings_t *settings = NULL;
+static fluid_synth_t *available_synth = NULL;
+
+static fluid_synth_t *create_or_recycle_synth()
+{
+	if (available_synth != NULL)
+	{
+		fluid_synth_t *recycled_synth = available_synth;
+		available_synth = NULL;
+		return recycled_synth;
+	}
+
+	return new_fluid_synth(settings);
+}
+
+static void return_synth(fluid_synth_t *synth)
+{
+	if (available_synth == NULL)
+	{
+		// Reset the synthesizer to avoid mixing up between MIDIs
+		fluid_synth_system_reset(synth);
+		// Also necessary even after a reset to avoid carryover... why?
+		fluid_synth_all_sounds_off(synth, -1);
+		available_synth = synth;
+		return;
+	}
+
+	delete_fluid_synth(synth);
+}
 
 static void free_fluidsynth_data(struct fluidsynth_data *data)
 {
@@ -58,7 +86,7 @@ static void free_fluidsynth_data(struct fluidsynth_data *data)
 	}
 	if (data->synth)
 	{
-		delete_fluid_synth(data->synth);
+		return_synth(data->synth);
 		data->synth = NULL;
 	}
 #ifdef HAVE_SMF
@@ -81,7 +109,7 @@ static struct fluidsynth_data *make_fluidsynth_data(const char *file)
 #endif
 	decoder_error_init(&data->error);
 
-	data->synth = new_fluid_synth(settings);
+	data->synth = create_or_recycle_synth();
 	if (data->synth == NULL)
 	{
 		decoder_error(&data->error, ERROR_FATAL, 0,
@@ -89,7 +117,7 @@ static struct fluidsynth_data *make_fluidsynth_data(const char *file)
 		free_fluidsynth_data(data);
 		return data;
 	}
-	if (soundfont != NULL &&
+	if (soundfont != NULL && fluid_synth_sfcount(data->synth) == 0 &&
 	    fluid_synth_sfload(data->synth, soundfont, 1) == FLUID_FAILED)
 	{
 		decoder_error(&data->error, ERROR_FATAL, 0,
@@ -302,6 +330,12 @@ static void fluidsynth_init()
 
 static void fluidsynth_destroy()
 {
+	if (available_synth != NULL)
+	{
+		delete_fluid_synth(available_synth);
+		available_synth = NULL;
+	}
+
 	delete_fluid_settings(settings);
 	settings = NULL;
 }
