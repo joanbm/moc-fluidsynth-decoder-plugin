@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
 #include <fluidsynth.h>
 #ifdef HAVE_SMF
 #include <smf.h>
@@ -50,8 +51,41 @@ static int rate = 44100;
 static fluid_settings_t *settings = NULL;
 static fluid_synth_t *available_synth = NULL;
 
+static bool have_available_synth_delayed_reclaim_thread = false;
+static pthread_t available_synth_delayed_reclaim_thread;
+
+void *available_synth_delayed_reclaim(void *void_data ATTR_UNUSED)
+{
+	// Grace period during which, if the user loads another MIDI file,
+	// the thread will be cancelled and no cleanup will happen
+	sleep(300);
+
+	// Now we are commited to clean up; ignore cancelation requests
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &(int){0});
+
+	if (available_synth)
+	{
+		delete_fluid_synth(available_synth);
+		available_synth = NULL;
+	}
+
+	return NULL;
+}
+
+static void cancel_available_synth_delayed_reclaim()
+{
+	if (have_available_synth_delayed_reclaim_thread)
+	{
+		pthread_cancel(available_synth_delayed_reclaim_thread);
+		pthread_join(available_synth_delayed_reclaim_thread, NULL);
+		have_available_synth_delayed_reclaim_thread = false;
+	}
+}
+
 static fluid_synth_t *create_or_recycle_synth()
 {
+	cancel_available_synth_delayed_reclaim();
+
 	if (available_synth != NULL)
 	{
 		fluid_synth_t *recycled_synth = available_synth;
@@ -71,6 +105,12 @@ static void return_synth(fluid_synth_t *synth)
 		// Also necessary even after a reset to avoid carryover... why?
 		fluid_synth_all_sounds_off(synth, -1);
 		available_synth = synth;
+
+		have_available_synth_delayed_reclaim_thread =
+		    pthread_create(&available_synth_delayed_reclaim_thread,
+				   NULL, available_synth_delayed_reclaim,
+				   NULL) == 0;
+
 		return;
 	}
 
@@ -330,6 +370,8 @@ static void fluidsynth_init()
 
 static void fluidsynth_destroy()
 {
+	cancel_available_synth_delayed_reclaim();
+
 	if (available_synth != NULL)
 	{
 		delete_fluid_synth(available_synth);
