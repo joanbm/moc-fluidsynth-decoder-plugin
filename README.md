@@ -116,7 +116,7 @@ You can mount your SoundFont and music inside the container as follows:
 
 ```sh
 docker build . -t moc-fluidsynth-plugin
-podman run --rm -it \
+docker run --rm -it \
     -v "$XDG_RUNTIME_DIR"/pulse/native:/pulse-native \
     -e PULSE_SERVER=unix:/pulse-native \
     -v "/path/to/my/music/folder":/app/music:ro \
