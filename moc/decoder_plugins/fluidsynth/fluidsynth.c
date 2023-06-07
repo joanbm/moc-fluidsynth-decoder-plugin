@@ -290,9 +290,9 @@ static void fluidsynth_init()
 	if (soundfont == NULL)
 	{
 		char *default_soundfont;
-		if (fluid_settings_getstr_default(settings,
-					      "synth.default-soundfont",
-					      &default_soundfont) == FLUID_OK)
+		if (fluid_settings_getstr_default(
+			settings, "synth.default-soundfont",
+			&default_soundfont) == FLUID_OK)
 		{
 			soundfont = default_soundfont;
 		}
