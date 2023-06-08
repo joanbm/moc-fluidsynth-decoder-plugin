@@ -50,6 +50,7 @@ static const char *soundfont = NULL;
 static int rate = 44100;
 static fluid_settings_t *settings = NULL;
 static fluid_synth_t *available_synth = NULL;
+static pthread_mutex_t available_synth_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static bool have_available_synth_delayed_reclaim_thread = false;
 static pthread_t available_synth_delayed_reclaim_thread;
@@ -63,55 +64,74 @@ void *available_synth_delayed_reclaim(void *void_data ATTR_UNUSED)
 	// Now we are commited to clean up; ignore cancelation requests
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &(int){0});
 
+	pthread_mutex_lock(&available_synth_mutex);
 	if (available_synth)
 	{
 		delete_fluid_synth(available_synth);
 		available_synth = NULL;
 	}
+	pthread_mutex_unlock(&available_synth_mutex);
 
 	return NULL;
 }
 
-static void cancel_available_synth_delayed_reclaim()
+static fluid_synth_t *acquire_available_synth()
 {
+	pthread_mutex_lock(&available_synth_mutex);
+
 	if (have_available_synth_delayed_reclaim_thread)
 	{
 		pthread_cancel(available_synth_delayed_reclaim_thread);
-		pthread_join(available_synth_delayed_reclaim_thread, NULL);
 		have_available_synth_delayed_reclaim_thread = false;
 	}
+
+	fluid_synth_t *acquired_synth = available_synth;
+	available_synth = NULL;
+
+	pthread_mutex_unlock(&available_synth_mutex);
+
+	return acquired_synth;
 }
 
-static fluid_synth_t *create_or_recycle_synth()
+static bool donate_available_synth(fluid_synth_t *synth)
 {
-	cancel_available_synth_delayed_reclaim();
+	pthread_mutex_lock(&available_synth_mutex);
 
-	if (available_synth != NULL)
+	bool success = available_synth == NULL;
+	if (success)
 	{
-		fluid_synth_t *recycled_synth = available_synth;
-		available_synth = NULL;
-		return recycled_synth;
-	}
-
-	return new_fluid_synth(settings);
-}
-
-static void return_synth(fluid_synth_t *synth)
-{
-	if (available_synth == NULL)
-	{
-		// Reset the synthesizer to avoid mixing up between MIDIs
-		fluid_synth_system_reset(synth);
-		// Also necessary even after a reset to avoid carryover... why?
-		fluid_synth_all_sounds_off(synth, -1);
 		available_synth = synth;
 
 		have_available_synth_delayed_reclaim_thread =
 		    pthread_create(&available_synth_delayed_reclaim_thread,
 				   NULL, available_synth_delayed_reclaim,
 				   NULL) == 0;
+	}
 
-		return;
+	pthread_mutex_unlock(&available_synth_mutex);
+	return success;
+}
+
+static fluid_synth_t *create_or_recycle_synth()
+{
+	fluid_synth_t *recycled_synth = acquire_available_synth();
+	return recycled_synth != NULL ? recycled_synth
+				      : new_fluid_synth(settings);
+}
+
+static void return_or_delete_synth(fluid_synth_t *synth)
+{
+	if (available_synth == NULL) // Double-checked locking optimization
+	{
+		// Reset the synthesizer to avoid mixing up between MIDIs
+		fluid_synth_system_reset(synth);
+		// Also necessary even after a reset to avoid carryover... why?
+		fluid_synth_all_sounds_off(synth, -1);
+
+		if (donate_available_synth(synth))
+		{
+			return;
+		}
 	}
 
 	delete_fluid_synth(synth);
@@ -126,7 +146,7 @@ static void free_fluidsynth_data(struct fluidsynth_data *data)
 	}
 	if (data->synth)
 	{
-		return_synth(data->synth);
+		return_or_delete_synth(data->synth);
 		data->synth = NULL;
 	}
 #ifdef HAVE_SMF
@@ -370,12 +390,10 @@ static void fluidsynth_init()
 
 static void fluidsynth_destroy()
 {
-	cancel_available_synth_delayed_reclaim();
-
-	if (available_synth != NULL)
+	fluid_synth_t *recycled_synth = acquire_available_synth();
+	if (recycled_synth != NULL)
 	{
-		delete_fluid_synth(available_synth);
-		available_synth = NULL;
+		delete_fluid_synth(recycled_synth);
 	}
 
 	delete_fluid_settings(settings);
