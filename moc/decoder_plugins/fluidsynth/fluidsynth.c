@@ -256,6 +256,8 @@ static void fluidsynth_info(const char *file_name, struct file_tags *info,
 	}
 
 	smf_delete(smf);
+#else
+	(void)file_name, (void)info, (void)tags_sel;
 #endif
 }
 
@@ -280,6 +282,7 @@ static int fluidsynth_seek(void *void_data, int sec)
 
 	return (int)event->time_seconds;
 #else
+	(void)void_data, (void)sec;
 	return -1;
 #endif
 }
@@ -319,6 +322,7 @@ static int fluidsynth_get_duration(void *void_data)
 	struct fluidsynth_data *data = (struct fluidsynth_data *)void_data;
 	return (int)smf_get_length_seconds(data->smf);
 #else
+	(void)void_data;
 	return -1;
 #endif
 }
