@@ -46,7 +46,7 @@ struct fluidsynth_data
 	struct decoder_error error;
 };
 
-static const char *soundfont = NULL;
+static char *soundfont = NULL;
 static int rate = 44100;
 static fluid_settings_t *settings = NULL;
 static fluid_synth_t *available_synth = NULL;
@@ -158,6 +158,33 @@ static void free_fluidsynth_data(struct fluidsynth_data *data)
 #endif
 }
 
+static int set_or_update_soundfont(fluid_synth_t *synth)
+{
+	if (soundfont == NULL)
+	{
+		return FLUID_OK;
+	}
+
+	// If there's already a SoundFont, make sure it's the one we want
+	if (fluid_synth_sfcount(synth) == 1)
+	{
+		fluid_sfont_t *font = fluid_synth_get_sfont(synth, 0);
+		if (strcmp(fluid_sfont_get_name(font), soundfont) != 0)
+		{
+			fluid_synth_sfunload(synth, fluid_sfont_get_id(font),
+					     1);
+		}
+	}
+
+	if (fluid_synth_sfcount(synth) == 0 &&
+	    fluid_synth_sfload(synth, soundfont, 1) == FLUID_FAILED)
+	{
+		return FLUID_FAILED;
+	}
+
+	return FLUID_OK;
+}
+
 static struct fluidsynth_data *make_fluidsynth_data(const char *file)
 {
 	struct fluidsynth_data *data =
@@ -169,6 +196,13 @@ static struct fluidsynth_data *make_fluidsynth_data(const char *file)
 #endif
 	decoder_error_init(&data->error);
 
+	if (fluid_is_soundfont(file))
+	{
+		free(soundfont);
+		soundfont = strdup(file);
+		return data;
+	}
+
 	data->synth = create_or_recycle_synth();
 	if (data->synth == NULL)
 	{
@@ -177,8 +211,7 @@ static struct fluidsynth_data *make_fluidsynth_data(const char *file)
 		free_fluidsynth_data(data);
 		return data;
 	}
-	if (soundfont != NULL && fluid_synth_sfcount(data->synth) == 0 &&
-	    fluid_synth_sfload(data->synth, soundfont, 1) == FLUID_FAILED)
+	if (set_or_update_soundfont(data->synth) == FLUID_FAILED)
 	{
 		decoder_error(&data->error, ERROR_FATAL, 0,
 			      "Can't load soundfont: %s", soundfont);
@@ -265,6 +298,10 @@ static int fluidsynth_seek(void *void_data, int sec)
 {
 #ifdef HAVE_SMF
 	struct fluidsynth_data *data = (struct fluidsynth_data *)void_data;
+	if (data->player == NULL || data->smf == NULL)
+	{
+		return 0;
+	}
 
 	assert(sec >= 0);
 
@@ -291,6 +328,10 @@ static int fluidsynth_decode(void *void_data, char *buf, int buf_len,
 			     struct sound_params *sound_params)
 {
 	struct fluidsynth_data *data = (struct fluidsynth_data *)void_data;
+	if (data->player == NULL)
+	{
+		return 0;
+	}
 
 	sound_params->channels = 2;
 	sound_params->rate = rate;
@@ -320,7 +361,7 @@ static int fluidsynth_get_duration(void *void_data)
 {
 #ifdef HAVE_SMF
 	struct fluidsynth_data *data = (struct fluidsynth_data *)void_data;
-	return (int)smf_get_length_seconds(data->smf);
+	return data->smf != NULL ? (int)smf_get_length_seconds(data->smf) : -1;
 #else
 	(void)void_data;
 	return -1;
@@ -329,18 +370,27 @@ static int fluidsynth_get_duration(void *void_data)
 
 static void fluidsynth_get_name(const char *file ATTR_UNUSED, char buf[4])
 {
-	strcpy(buf, "MID");
+	char *ext = ext_pos(file);
+	if (!strcasecmp(ext, "MID"))
+		strcpy(buf, "MID");
+	else if (!strcasecmp(ext, "SF2"))
+		strcpy(buf, "SF2");
+	else if (!strcasecmp(ext, "SF3"))
+		strcpy(buf, "SF3");
 }
 
 static int fluidsynth_our_format_ext(const char *ext)
 {
-	return !strcasecmp(ext, "MID");
+	return !strcasecmp(ext, "MID") || !strcasecmp(ext, "SF2") ||
+	       !strcasecmp(ext, "SF3");
 }
 
 static int fluidsynth_our_format_mime(const char *mime)
 {
 	return !strcasecmp(mime, "audio/midi") ||
-	       !strncasecmp(mime, "audio/midi;", 11);
+	       !strncasecmp(mime, "audio/midi;", 11) ||
+	       !strcasecmp(mime, "audio/x-sfbk") ||
+	       !strncasecmp(mime, "audio/x-sfbk;", 13);
 }
 
 static void fluidsynth_get_error(void *prv_data, struct decoder_error *error)
@@ -353,10 +403,10 @@ static void fluidsynth_get_error(void *prv_data, struct decoder_error *error)
 static void fluidsynth_init()
 {
 #ifdef STANDALONE
-	soundfont = getenv("MOC_FLUIDSYNTH_SOUNDFONT");
+	soundfont = xstrdup(getenv("MOC_FLUIDSYNTH_SOUNDFONT"));
 	rate = 44100;
 #else
-	soundfont = options_get_str("FluidSynth_SoundFont");
+	soundfont = xstrdup(options_get_str("FluidSynth_SoundFont"));
 	rate = options_get_int("FluidSynth_Rate");
 #endif
 
@@ -383,9 +433,8 @@ static void fluidsynth_init()
 	if (soundfont == NULL)
 	{
 		char *default_soundfont;
-		if (fluid_settings_getstr_default(
-			settings, "synth.default-soundfont",
-			&default_soundfont) == FLUID_OK)
+		if (fluid_settings_dupstr(settings, "synth.default-soundfont",
+					  &default_soundfont) == FLUID_OK)
 		{
 			soundfont = default_soundfont;
 		}
@@ -399,6 +448,9 @@ static void fluidsynth_destroy()
 	{
 		delete_fluid_synth(recycled_synth);
 	}
+
+	free(soundfont);
+	soundfont = NULL;
 
 	delete_fluid_settings(settings);
 	settings = NULL;
