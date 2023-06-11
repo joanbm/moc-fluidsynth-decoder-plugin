@@ -340,7 +340,7 @@ static int fluidsynth_our_format_ext(const char *ext)
 static int fluidsynth_our_format_mime(const char *mime)
 {
 	return !strcasecmp(mime, "audio/midi") ||
-	       !strncasecmp(mime, "audio/midi;", 10);
+	       !strncasecmp(mime, "audio/midi;", 11);
 }
 
 static void fluidsynth_get_error(void *prv_data, struct decoder_error *error)
