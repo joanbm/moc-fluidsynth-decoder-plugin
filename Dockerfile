@@ -7,12 +7,12 @@ COPY Makefile ./
 COPY moc ./moc
 RUN make 0001-Add-FluidSynth-decoder-plugin.patch
 
-FROM debian:bullseye-slim AS builder
+FROM debian:bookworm-slim AS builder
 
 WORKDIR /app
 
 # Download dependencies, MOC sources and copy the patch inside
-RUN sed -i '/^deb / {p; s/deb /deb-src /}' /etc/apt/sources.list \
+RUN sed -i 's/^Types: deb/Types: deb deb-src/g' /etc/apt/sources.list.d/debian.sources \
  && apt-get update \
  && apt-get build-dep --no-install-recommends -y moc \
  && apt-get install --no-install-recommends -y devscripts quilt libfluidsynth-dev libsmf-dev \
@@ -31,11 +31,11 @@ RUN cd ./*/ \
  && dch --nmu "Add FluidSynth decoder plugin" \
  && dpkg-buildpackage --unsigned-source --unsigned-changes
 
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 # For better caching, install first the official Debian MOC package to pull all dependencies
 RUN apt-get update \
- && apt-get install -y --no-install-recommends moc moc-ffmpeg-plugin libfluidsynth2 libsmf0 pulseaudio \
+ && apt-get install -y --no-install-recommends moc moc-ffmpeg-plugin libsndio7.0 libfluidsynth3 libsmf0 pulseaudio \
  && rm -rf /var/lib/apt/lists/*
 
 # Overwrite the official Debian MOC package with our version
