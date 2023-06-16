@@ -59,7 +59,7 @@ foo@bar ~/moc-fluidsynth-plugin/moc-2.5.2$ make install
 foo@bar ~/moc-fluidsynth-plugin/moc-2.5.2$ ~/my-moc-install/bin/mocp
 ```
 
-If you want to backport the plugin to a different version of MOC, you can generate a patch file by running `make 0001-Add-FluidSynth-decoder-plugin.patch` (requires `git` and `subersion`).
+If you want to backport the plugin to a different version of MOC, you can generate a patch file by running `make 0001-Add-FluidSynth-decoder-plugin.patch` (requires `git` and `subversion`).
 Once you have the patch, you should be able to apply it over the source code of that version (modulo any conflicts that may happen). For example:
 
 ```sh
